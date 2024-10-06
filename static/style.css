@@ -1,0 +1,112 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure body takes the full height of the viewport */
+}
+
+main {
+    flex-grow: 1; /* Ensures main content takes up remaining space above the footer */
+    padding: 20px;
+}
+
+header {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}
+
+nav a {
+    color: white;
+    margin: 0 15px;
+    text-decoration: none;
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    width: 100%;
+    position: relative;
+    bottom: 0;
+    margin-top: auto; /* Push footer to the bottom */
+}
+
+p {
+    max-width: 1000px; /* Limit paragraph width for readability */
+    margin: 0 auto; /* Center the paragraph */
+    line-height: 1.6; /* Improve line spacing */
+    font-size: 1.1em; /* Slightly larger font for better readability */
+    color: #555; /* Softer text color */
+    padding: 0 20px; /* Add horizontal padding */
+}
+
+/* Centering the image container */
+.image-container {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically if needed */
+    position: relative;
+}
+
+/* Styles for the image */
+img {
+    width: 1000px; /* Set the width to a percentage of the container */
+    height: 300px; /* Maintain aspect ratio for the height */
+    object-fit: cover; /* Ensure the image covers the set dimensions without distortion */
+    border-radius: 45px;
+}
+
+.overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50px); /* Center and move down */
+    color: white;
+    font-size: 80px; /* Adjust font size as needed */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Optional shadow for better readability */
+    opacity: 0; /* Initially hidden */
+    transition: opacity 0.5s ease; /* Smooth transition for opacity */
+    animation: slide-up 0.5s forwards; /* Apply animation */
+    animation-delay: 0.5s; /* Delay the animation to match the image fade */
+    font-family: "Droid Sans";
+}
+
+.image-container a:hover .img {
+    opacity: 0.3; /* Fade out the image */
+}
+
+.image-container a:hover .overlay {
+    opacity: 1; /* Fade in the overlay text */
+    animation: slide-up 1s forwards; /* Trigger the animation on hover */
+}
+
+.content-box {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    max-width: 900px;
+    margin: 20px auto;
+    text-align: left;
+}
+
+.content-container {
+    display: flex; /* Use Flexbox for layout */
+    justify-content: space-between; /* Space out the boxes */
+    margin: 20px; /* Add margin around the container */
+}
+
+h4 {
+    margin-top: 1px; /* Space above the h4 */
+    margin-bottom: 10px; /* Space below the h4 */
+    color: #333; /* Darker color for contrast */
+}
+
+.background-page {
+    background-color: white;
+}

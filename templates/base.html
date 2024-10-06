@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wanderphilly</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="background-page">
+<header>
+    <nav>
+        <a href="/">Home</a>
+        {% if session.get('user_id') %}
+            <a href="/upload">Upload Route</a>
+            <a href="/view_routes">View Routes</a>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+        {% endif %}
+    </nav>
+</header>
+
+<main>
+    {% block content %}
+    <div class="image-container">
+        <a href="/view_routes">
+            <img src="{{ url_for('static', filename='Philly_Skyline.jpg') }}" alt="Wanderphilly" class="img">
+            <div class="overlay">Wanderphilly</div>
+        </a>
+    </div> <!-- Closing div for image-container -->
+
+    <div class="content-container">
+        <div class="content-box">
+            <h2>Wanderphilly: Uncover Philly’s Hidden Gems, One Walk at a Time</h2>
+
+            <div class="content-section">
+                <h4>About the Project</h4>
+                <p>
+                    Wanderphilly is a platform designed to bring together the vibrant community of Philadelphia’s walkers and explorers.
+                    Inspired by our love for discovering hidden spots in the city, we realized that many local gems aren't easily accessible
+                    through traditional tourist guides. By enabling users to share and exchange their favorite walking routes, the platform fosters
+                    a sense of shared discovery while encouraging a healthy, sustainable way to explore Philly.
+                </p>
+            </div>
+
+            <div class="content-section">
+                <h4>Guide</h4>
+                <p>
+                    To use Wanderphilly, register and log in. Click the "Upload Route" icon to enter details like name, description, rating, and tags.
+                    Use the interactive map to create your route by clicking to add stops. Once finished, submit the form. To explore routes created by
+                    others, select the "View Routes" icon on the home screen. You can filter routes by rating, tags, and name in the top left corner.
+                </p>
+            </div>
+        </div> <!-- Closing div for content-box -->
+    </div> <!-- Closing div for content-container -->
+    {% endblock %}
+</main>
+
+<footer>
+    <p>Wanderphilly © 2024</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Available Routes</h2>
+
+    <!-- Filter and Search Section -->
+    <div class="filter-search-container">
+        <input type="text" id="search-input" placeholder="Search by route name, tags, or description...">
+        <select id="rating-filter">
+            <option value="">All Ratings</option>
+            <option value="5">5 Stars</option>
+            <option value="4">4 Stars & Above</option>
+            <option value="3">3 Stars & Above</option>
+            <option value="2">2 Stars & Above</option>
+            <option value="1">1 Star & Above</option>
+        </select>
+        <button id="filter-button">Filter</button>
+    </div>
+
+    <ul id="routes-list" style="list-style-type: none; padding-left: 0;">
+        {% for route in routes %}
+            <li class="route-item" data-route-name="{{ route.route_name }}" data-description="{{ route.description }}" data-tags="{{ route.tags }}" data-rating="{{ route.rating }}">
+                <div class="route-box">
+                    <!-- Top strip -->
+                    <div class="route-header">
+                        <div class="route-title-section">
+                            <h3 class="route-title">{{ route.route_name }}</h3>
+                            <p class="route-description">{{ route.description }}</p>
+
+                            <!-- Display route under description, left-aligned -->
+                            <p class="route-addresses" style="text-align: left;"><strong>Route:</strong> {{ route.addresses | join(' → ') }}</p>
+                        </div>
+                        <div class="route-stars">
+                            <span>⭐⭐⭐⭐⭐</span> <!-- Visual stars -->
+                        </div>
+                    </div>
+
+                    <!-- Map and other details -->
+                    <div class="route-body">
+                        <div id="map-{{ loop.index0 }}" class="route-map" data-coordinates='{{ route.coordinates | tojson }}'></div>
+                    </div>
+
+                    <!-- Bottom strip with time, distance, and tags -->
+                    <div class="route-footer">
+                        <div class="route-time-distance">
+                            <p id="time-distance-{{ loop.index0 }}">Calculating...</p>
+                        </div>
+
+                        <!-- Tags should be right-aligned in the footer -->
+                        <div class="route-tags" style="margin-left: auto;">
+                            <p><strong>Tags:</strong> {{ route.tags.split(',') | join(', ') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Include Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        // Initialize maps and implement filtering
+        document.addEventListener('DOMContentLoaded', function () {
+            function calculateDistance(latlngs) {
+                let totalDistance = 0;
+                for (let i = 0; i < latlngs.length - 1; i++) {
+                    totalDistance += latlngs[i].distanceTo(latlngs[i + 1]);
+                }
+                return totalDistance;
+            }
+
+            function calculateWalkingTime(distanceInMeters) {
+                const distanceInMiles = distanceInMeters / 1609.34; // Convert meters to miles
+                const walkingSpeedMph = 3.1; // Average walking speed in miles per hour
+                const timeInHours = distanceInMiles / walkingSpeedMph;
+                const totalMinutes = timeInHours * 60;
+
+                if (totalMinutes >= 60) {
+                    const hours = Math.floor(totalMinutes / 60);
+                    const minutes = Math.round(totalMinutes % 60);
+                    return `${hours} hour${hours > 1 ? 's' : ''}${minutes > 0 ? ' ' + minutes + ' minute' + (minutes > 1 ? 's' : '') : ''}`;
+                } else {
+                    return `${Math.round(totalMinutes)} minutes`;
+                }
+            }
+
+            // Initialize maps for each route
+            {% for route in routes %}
+                (function () {
+                    var mapId = 'map-{{ loop.index0 }}';
+                    var coordinates = {{ route.coordinates | safe }};
+                    var map = L.map(mapId);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                    }).addTo(map);
+
+                    // Create an array of waypoints for routing
+                    var waypoints = coordinates.map(function (coord) {
+                        return L.latLng(coord.lat, coord.lng);
+                    });
+
+                    // Use Leaflet Routing Machine to create a planned route
+                    var routingControl = L.Routing.control({
+                        waypoints: waypoints,
+                        lineOptions: {
+                            styles: [{color: 'blue', opacity: 1, weight: 5}]
+                        },
+                        router: L.Routing.osrmv1({
+                            serviceUrl: 'https://router.project-osrm.org/route/v1'
+                        }),
+                        addWaypoints: false,
+                        draggableWaypoints: false,
+                        routeWhileDragging: false,
+                    }).addTo(map);
+
+                    // Zoom the map to fit the route
+                    routingControl.on('routesfound', function (e) {
+                        map.fitBounds(routingControl.getPlan().getWaypoints().map(function (waypoint) {
+                            return waypoint.latLng;
+                        }));
+                    });
+
+                    // Calculate the total distance and display both time and distance in the required format
+                    var totalDistance = calculateDistance(waypoints); // in meters
+                    var distanceInMiles = (totalDistance / 1609.34).toFixed(2); // Convert to miles and format to 2 decimal places
+                    var estimatedTime = calculateWalkingTime(totalDistance);
+
+                    // Update the display to show the format "Time (Distance)"
+                    document.getElementById('time-distance-{{ loop.index0 }}').innerText = `${estimatedTime} (${distanceInMiles} miles)`;
+                })();
+            {% endfor %}
+
+            // Implement filtering and searching
+            var filterButton = document.getElementById('filter-button');
+            filterButton.addEventListener('click', function () {
+                var searchInput = document.getElementById('search-input').value.toLowerCase();
+                var ratingFilter = document.getElementById('rating-filter').value;
+                var routeItems = document.querySelectorAll('.route-item');
+
+                routeItems.forEach(function (item) {
+                    var routeName = item.getAttribute('data-route-name').toLowerCase();
+                    var description = item.getAttribute('data-description').toLowerCase();
+                    var tags = item.getAttribute('data-tags').toLowerCase();
+                    var rating = parseInt(item.getAttribute('data-rating'));
+
+                    var matchesSearch = routeName.includes(searchInput) || description.includes(searchInput) || tags.includes(searchInput);
+                    var matchesRating = !ratingFilter || rating >= parseInt(ratingFilter);
+
+                    if (matchesSearch && matchesRating) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+
+    <style>
+        .route-box {
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .route-header {
+            background-color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .route-title-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .route-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: black;
+        }
+
+        .route-stars {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .route-description {
+            font-size: 1rem;
+            color: black;
+            margin-bottom: 0;
+            margin-top: 5px;
+        }
+
+        .route-body {
+            padding: 10px;
+        }
+
+        .route-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+
+        .route-map {
+            height: 300px;
+            margin-top: 10px;
+        }
+
+        .route-time-distance {
+            font-size: 1rem;
+        }
+
+        .route-tags {
+            font-size: 1rem;
+            color: #555;
+            text-align: right; /* Align tags to the right */
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .filter-search-container {
+            margin-bottom: 20px;
+        }
+
+        .filter-search-container input,
+        .filter-search-container select,
+        .filter-search-container button {
+            padding: 8px;
+            margin-right: 10px;
+        }
+    </style>
+
+{% endblock %}
